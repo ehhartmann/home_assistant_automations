@@ -62,8 +62,10 @@ mode: restart
 trigger:
   - platform: time
     at: !input start_time
+    id: weekday
   - platform: time
     at: !input weekend_start_time
+    id: weekend
 
 condition: []
 
@@ -73,17 +75,15 @@ action:
       duration: !input fade_duration
       color_temp: !input color_temp
       weekend_sensor: !input weekend_sensor
-      weekend_start: !input weekend_start_time
       is_weekend: "{{ is_state(weekend_sensor, 'on') }}"
       steps: 20
       step_delay: "{{ (duration * 60 / steps) | int }}"
-      trigger_time: "{{ trigger.now.time().isoformat() }}"
+      trigger_id: "{{ trigger.id }}"
 
   - choose:
-      # Only run weekend version if weekend start time is set and weekend is on
       - conditions:
           - condition: template
-            value_template: "{{ is_weekend and weekend_start != '' and trigger_time == weekend_start }}"
+            value_template: "{{ trigger_id == 'weekend' and is_weekend }}"
         sequence:
           - service: light.turn_on
             target:

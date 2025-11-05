@@ -1,3 +1,62 @@
+blueprint:
+  name: Gradual Wake-Up Light (Hue or any dimmable light)
+  description: >
+    Gradually turns on a light over a configurable fade duration and color temperature.
+    Supports different behavior for weekends.
+  domain: automation
+  input:
+    light_entity:
+      name: Target Light
+      description: The light entity to fade on.
+      selector:
+        entity:
+          domain: light
+
+    start_time:
+      name: Wake-up Start Time
+      description: When to start the fade sequence.
+      selector:
+        time: {}
+
+    fade_duration:
+      name: Fade Duration (minutes)
+      description: How long the fade should last.
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: minutes
+          step: 1
+          mode: slider
+
+    color_temp:
+      name: Color Temperature (mired)
+      description: Light color temperature during fade.
+      default: 370
+      selector:
+        number:
+          min: 153
+          max: 500
+          step: 10
+          unit_of_measurement: mired
+          mode: slider
+
+    weekend_sensor:
+      name: Weekend Sensor
+      description: A binary_sensor that is 'on' during weekends.
+      default: binary_sensor.weekend
+      selector:
+        entity:
+          domain: binary_sensor
+
+    weekend_start_time:
+      name: Weekend Start Time (optional)
+      description: Optional different start time for weekends.
+      default: ""
+      selector:
+        time: {}
+
 mode: restart
 
 trigger:
@@ -21,7 +80,6 @@ action:
       trigger_time: "{{ trigger.now.time().isoformat() }}"
 
   - choose:
-      # Weekend branch
       - conditions:
           - condition: template
             value_template: "{{ is_weekend and weekend_start != '' and trigger_time == weekend_start }}"

@@ -29,7 +29,19 @@ blueprint:
           unit_of_measurement: minutes
           step: 1
           mode: slider
-
+          
+    light_off_duration:
+      name: Light Off Duration (minutes)
+      description: How long to wait before turning off the light.
+      default: 30
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: minutes
+          step: 1
+          mode: slider
+          
     color_temp:
       name: Color Temperature (mired)
       description: Light color temperature during fade.
@@ -79,7 +91,7 @@ action:
       steps: 20
       step_delay: "{{ (duration * 60 / steps) | int }}"
       trigger_id: "{{ trigger.id }}"
-
+      off_duration: !input light_off_duration
   - choose:
       - conditions:
           - condition: template
@@ -103,6 +115,11 @@ action:
                     transition: "{{ step_delay }}"
                 - delay:
                     seconds: "{{ step_delay }}"
+          - delay:
+              minutes: "{{ off_duration }}"
+          - service: light.turn_off
+            target:
+              entity_id: "{{ light }}"
     default:
       - service: light.turn_on
         target:
@@ -122,4 +139,9 @@ action:
                 transition: "{{ step_delay }}"
             - delay:
                 seconds: "{{ step_delay }}"
-
+      - delay:
+          minutes: "{{ off_duration }}"
+      - service: light.turn_off
+        target:
+          entity_id: "{{ light }}"
+          

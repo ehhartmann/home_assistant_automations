@@ -80,6 +80,7 @@ action:
       trigger_time: "{{ trigger.now.time().isoformat() }}"
 
   - choose:
+      # Only run weekend version if weekend start time is set and weekend is on
       - conditions:
           - condition: template
             value_template: "{{ is_weekend and weekend_start != '' and trigger_time == weekend_start }}"

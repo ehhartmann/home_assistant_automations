@@ -2,8 +2,9 @@ blueprint:
   name: Gradual Wake-Up Light (Hue or any dimmable light)
   description: >
     Gradually turns on a light over a configurable fade duration and color temperature.
-    Automatically uses a different start time on weekends (if provided).
+    Can be configured to run on weekdays, weekends, or both using a weekday sensor.
   domain: automation
+
   input:
     light_entity:
       name: Target Light
@@ -13,15 +14,8 @@ blueprint:
           domain: light
 
     start_time:
-      name: Weekday Start Time
-      description: When to start the fade sequence on weekdays.
-      selector:
-        time: {}
-
-    weekend_start_time:
-      name: Weekend Start Time (optional)
-      description: Optional different start time for weekends.
-      default: ""
+      name: Wake-up Start Time
+      description: When to start the fade sequence.
       selector:
         time: {}
 
@@ -61,38 +55,52 @@ blueprint:
           unit_of_measurement: mired
           mode: slider
 
-    weekend_sensor:
-      name: Weekend Sensor
-      description: A binary_sensor that is 'on' during weekends.
-      default: binary_sensor.weekend
+    weekday_sensor:
+      name: Weekday Sensor
+      description: >
+        A binary_sensor that is 'on' during weekdays (for example: binary_sensor.workday_sensor).
+      default: binary_sensor.workday_sensor
       selector:
         entity:
           domain: binary_sensor
 
+    active_days:
+      name: Active Days
+      description: Choose when this automation should run.
+      default: both
+      selector:
+        select:
+          options:
+            - label: Weekdays only
+              value: weekdays
+            - label: Weekends only
+              value: weekends
+            - label: Both
+              value: both
+
 mode: restart
 
 trigger:
-  # Single dynamic trigger: picks weekend or weekday start time
   - platform: time
-    at: >
-      {% set weekend_sensor = !input weekend_sensor %}
-      {% set weekend_time = !input weekend_start_time %}
-      {% set weekday_time = !input start_time %}
-      {% if is_state(weekend_sensor, 'on') and weekend_time != '' %}
-        {{ weekend_time }}
-      {% else %}
-        {{ weekday_time }}
-      {% endif %}
+    at: !input start_time
 
-condition: []
+condition:
+  - condition: template
+    value_template: >
+      {% set active_days = !input active_days %}
+      {% set weekday_sensor = !input weekday_sensor %}
+      {% set is_weekday = is_state(weekday_sensor, 'on') %}
+      {{ 
+        active_days == 'both' or
+        (active_days == 'weekdays' and is_weekday) or
+        (active_days == 'weekends' and not is_weekday)
+      }}
 
 action:
   - variables:
       light: !input light_entity
       duration: !input fade_duration
       color_temp: !input color_temp
-      weekend_sensor: !input weekend_sensor
-      is_weekend: "{{ is_state(weekend_sensor, 'on') }}"
       steps: 30
       step_delay: "{{ (duration * 60 / steps) | int }}"
       off_duration: !input light_off_duration

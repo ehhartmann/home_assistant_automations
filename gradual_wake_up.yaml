@@ -83,22 +83,24 @@ trigger:
   - platform: time
     at: !input start_time
 
+variables:
+  input_weekday_sensor: !input weekday_sensor
+  input_active_days: !input active_days
+  light: !input light_entity
+  duration: !input fade_duration
+  color_temp: !input color_temp
+  steps: 30
+  step_delay: "{{ (duration * 60 / steps) | int }}"
+  off_duration: !input light_off_duration
+
 condition:
   - condition: template
     value_template: >
-      {% set is_weekday = states(weekday_sensor) == 'on' %}
-      {{ (active_days == 'weekdays' and is_weekday) or
-         (active_days == 'weekends' and not is_weekday) }}
+      {% set is_weekday = states(input_weekday_sensor) == 'on' %}
+      {{ (input_active_days == 'weekdays' and is_weekday) or
+         (input_active_days == 'weekends' and not is_weekday) }}
 
 action:
-  - variables:
-      light: !input light_entity
-      duration: !input fade_duration
-      color_temp: !input color_temp
-      steps: 30
-      step_delay: "{{ (duration * 60 / steps) | int }}"
-      off_duration: !input light_off_duration
-
   - service: light.turn_on
     target:
       entity_id: "{{ light }}"

@@ -84,7 +84,8 @@ trigger:
   - platform: template
     value_template: >
       {% set t = states('sensor.time') %}
-      {% set target = (inputs.start_time | default('07:00'))[:5] %}
+      {% set start = inputs.start_time | as_datetime %}
+      {% set target = "%02d:%02d" | format(start.hour, start.minute) %}
       {{ t == target }}
 
 condition:

@@ -8,28 +8,24 @@ blueprint:
 input:
   light_entity:
     name: Target Light
-    description: The light entity to fade on.
     selector:
       entity:
         domain: light
 
   start_time:
-    name: Wake-up Start Time
-    description: When to start the fade sequence.
+    name: Wake-Up Start Time
     selector:
       time: {}
 
   fade_duration:
     name: Fade Duration (minutes)
-    description: How long the fade should last.
     default: 20
     selector:
       number:
         min: 1
         max: 60
-        unit_of_measurement: minutes
         step: 1
-        mode: slider
+        unit_of_measurement: minutes
           
   light_off_duration:
     name: Light Off Duration (minutes)

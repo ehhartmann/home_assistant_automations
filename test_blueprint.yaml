@@ -1,0 +1,11 @@
+blueprint:
+  name: Test Blueprint
+  domain: automation
+
+input:
+  test_light:
+    name: Test Light
+    selector:
+      entity:
+        domain: light
+

@@ -2,7 +2,7 @@ blueprint:
   name: Gradual Wake-Up Light (Hue or any dimmable light)
   description: >
     Gradually turns on a light over a configurable fade duration and color temperature.
-    Can be configured to run on weekdays, weekends, or both using a weekday sensor.
+    Can be configured to run on weekdays or weekends using a weekday sensor.
   domain: automation
 
   input:
@@ -68,7 +68,7 @@ blueprint:
     active_days:
       name: Active Days
       description: Choose when this automation should run.
-      default: both
+      default: weekdays
       selector:
         select:
           options:
@@ -76,42 +76,39 @@ blueprint:
               value: weekdays
             - label: Weekends only
               value: weekends
-            - label: Both
-              value: both
 
 mode: restart
 
+variables:
+  active_days: !input 'active_days'
+  weekday_sensor_entity: !input 'weekday_sensor'
+  is_weekday: "{{ states(weekday_sensor_entity).state == 'on' }}"
+  light: !input 'light_entity'
+  fade_duration_minutes: !input 'fade_duration'
+  color_temp_value: !input 'color_temp'
+  light_off_minutes: !input 'light_off_duration'
+  steps: 30
+  step_delay: "{{ (fade_duration_minutes * 60 / steps) | int }}"
+
 trigger:
   - platform: time
-    at: !input start_time
+    at: !input 'start_time'
 
 condition:
   - condition: template
     value_template: >
-      {% set active_days = (inputs.active_days | default('both')) %}
-      {% set weekday_sensor = states(inputs.weekday_sensor) %}
-      {% set is_weekday = weekday_sensor == 'on' %}
       {{ 
-        active_days == 'both' or
         (active_days == 'weekdays' and is_weekday) or
         (active_days == 'weekends' and not is_weekday)
       }}
 
 action:
-  - variables:
-      light: !input light_entity
-      duration: !input fade_duration
-      color_temp: !input color_temp
-      steps: 30
-      step_delay: "{{ (duration * 60 / steps) | int }}"
-      off_duration: !input light_off_duration
-
   - service: light.turn_on
     target:
       entity_id: "{{ light }}"
     data:
       brightness: 1
-      color_temp: "{{ color_temp }}"
+      color_temp: "{{ color_temp_value }}"
 
   - repeat:
       count: "{{ steps }}"
@@ -121,13 +118,13 @@ action:
             entity_id: "{{ light }}"
           data:
             brightness: "{{ (repeat.index / steps * 255) | int }}"
-            color_temp: "{{ color_temp }}"
+            color_temp: "{{ color_temp_value }}"
             transition: "{{ step_delay }}"
         - delay:
             seconds: "{{ step_delay }}"
 
   - delay:
-      minutes: "{{ off_duration }}"
+      minutes: "{{ light_off_minutes }}"
 
   - service: light.turn_off
     target:

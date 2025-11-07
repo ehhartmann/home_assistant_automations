@@ -84,16 +84,16 @@ trigger:
   - platform: template
     value_template: >
       {% set t = states('sensor.time') %}
-      {% set target = (inputs.start_time | default('07:00'))[0:5] %}
+      {% set target = (inputs.start_time | default('07:00'))[:5] %}
       {{ t == target }}
 
 condition:
   - condition: template
     value_template: >
-      {% set active_days = (inputs.active_days | default('both')) %}
+      {% set active_days = inputs.active_days | default('both') %}
       {% set weekday_sensor = states(inputs.weekday_sensor) %}
       {% set is_weekday = weekday_sensor == 'on' %}
-      {{ 
+      {{
         active_days == 'both' or
         (active_days == 'weekdays' and is_weekday) or
         (active_days == 'weekends' and not is_weekday)

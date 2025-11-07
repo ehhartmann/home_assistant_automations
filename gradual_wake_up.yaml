@@ -79,36 +79,32 @@ blueprint:
 
 mode: restart
 
-variables:
-  active_days: !input 'active_days'
-  weekday_sensor_entity: !input 'weekday_sensor'
-  is_weekday: "{{ states(weekday_sensor_entity).state == 'on' }}"
-  light: !input 'light_entity'
-  fade_duration_minutes: !input 'fade_duration'
-  color_temp_value: !input 'color_temp'
-  light_off_minutes: !input 'light_off_duration'
-  steps: 30
-  step_delay: "{{ (fade_duration_minutes * 60 / steps) | int }}"
-
 trigger:
   - platform: time
-    at: !input 'start_time'
+    at: !input start_time
 
 condition:
   - condition: template
     value_template: >
-      {{ 
-        (active_days == 'weekdays' and is_weekday) or
-        (active_days == 'weekends' and not is_weekday)
-      }}
+      {% set is_weekday = states(weekday_sensor) == 'on' %}
+      {{ (active_days == 'weekdays' and is_weekday) or
+         (active_days == 'weekends' and not is_weekday) }}
 
 action:
+  - variables:
+      light: !input light_entity
+      duration: !input fade_duration
+      color_temp: !input color_temp
+      steps: 30
+      step_delay: "{{ (duration * 60 / steps) | int }}"
+      off_duration: !input light_off_duration
+
   - service: light.turn_on
     target:
       entity_id: "{{ light }}"
     data:
       brightness: 1
-      color_temp: "{{ color_temp_value }}"
+      color_temp: "{{ color_temp }}"
 
   - repeat:
       count: "{{ steps }}"
@@ -118,13 +114,13 @@ action:
             entity_id: "{{ light }}"
           data:
             brightness: "{{ (repeat.index / steps * 255) | int }}"
-            color_temp: "{{ color_temp_value }}"
+            color_temp: "{{ color_temp }}"
             transition: "{{ step_delay }}"
         - delay:
             seconds: "{{ step_delay }}"
 
   - delay:
-      minutes: "{{ light_off_minutes }}"
+      minutes: "{{ off_duration }}"
 
   - service: light.turn_off
     target:

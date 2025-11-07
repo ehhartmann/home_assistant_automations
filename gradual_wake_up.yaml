@@ -5,85 +5,87 @@ blueprint:
     Can be configured to run on weekdays, weekends, or both using a weekday sensor.
   domain: automation
 
-  input:
-    light_entity:
-      name: Target Light
-      description: The light entity to fade on.
-      selector:
-        entity:
-          domain: light
+input:
+  light_entity:
+    name: Target Light
+    description: The light entity to fade on.
+    selector:
+      entity:
+        domain: light
 
-    start_time:
-      name: Wake-Up Time Helper
-      description: Select an input_datetime entity that holds the wake-up time.
-      selector:
-        entity:
-          domain: input_datetime
+  start_time:
+    name: Wake-up Start Time
+    description: When to start the fade sequence.
+    selector:
+      time: {}
 
-    fade_duration:
-      name: Fade Duration (minutes)
-      description: How long the fade should last.
-      default: 20
-      selector:
-        number:
-          min: 1
-          max: 60
-          unit_of_measurement: minutes
-          step: 1
-          mode: slider
+  fade_duration:
+    name: Fade Duration (minutes)
+    description: How long the fade should last.
+    default: 20
+    selector:
+      number:
+        min: 1
+        max: 60
+        unit_of_measurement: minutes
+        step: 1
+        mode: slider
           
-    light_off_duration:
-      name: Light Off Duration (minutes)
-      description: How long to wait before turning off the light.
-      default: 30
-      selector:
-        number:
-          min: 1
-          max: 60
-          unit_of_measurement: minutes
-          step: 1
-          mode: slider
+  light_off_duration:
+    name: Light Off Duration (minutes)
+    description: How long to wait before turning off the light.
+    default: 30
+    selector:
+      number:
+        min: 1
+        max: 60
+        unit_of_measurement: minutes
+        step: 1
+        mode: slider
           
-    color_temp:
-      name: Color Temperature (mired)
-      description: Light color temperature during fade.
-      default: 370
-      selector:
-        number:
-          min: 153
-          max: 500
-          step: 10
-          unit_of_measurement: mired
-          mode: slider
+  color_temp:
+    name: Color Temperature (mired)
+    description: Light color temperature during fade.
+    default: 370
+    selector:
+      number:
+        min: 153
+        max: 500
+        step: 10
+        unit_of_measurement: mired
+        mode: slider
 
-    weekday_sensor:
-      name: Weekday Sensor
-      description: >
-        A binary_sensor that is 'on' during weekdays (for example: binary_sensor.workday_sensor).
-      default: binary_sensor.workday_sensor
-      selector:
-        entity:
-          domain: binary_sensor
+  weekday_sensor:
+    name: Weekday Sensor
+    description: >
+      A binary_sensor that is 'on' during weekdays (for example: binary_sensor.workday_sensor).
+    default: binary_sensor.workday_sensor
+    selector:
+      entity:
+        domain: binary_sensor
 
-    active_days:
-      name: Active Days
-      description: Choose when this automation should run.
-      default: both
-      selector:
-        select:
-          options:
-            - label: Weekdays only
-              value: weekdays
-            - label: Weekends only
-              value: weekends
-            - label: Both
-              value: both
+  active_days:
+    name: Active Days
+    description: Choose when this automation should run.
+    default: both
+    selector:
+      select:
+        options:
+          - label: Weekdays only
+            value: weekdays
+          - label: Weekends only
+            value: weekends
+          - label: Both
+            value: both
 
 mode: restart
 
 trigger:
-  - platform: time
-    at: !input start_time
+  - platform: template
+    value_template: >
+      {% set t = states('sensor.time') %}
+      {% set target = (inputs.start_time | default('07:00'))[0:5] %}
+      {{ t == target }}
 
 condition:
   - condition: template

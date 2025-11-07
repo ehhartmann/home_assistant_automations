@@ -13,12 +13,12 @@ blueprint:
         entity:
           domain: light
 
-  start_time:
-    name: Wake-Up Time Helper
-    description: Select an input_datetime entity that holds the wake-up time.
-    selector:
-      entity:
-        domain: input_datetime
+    start_time:
+      name: Wake-Up Time Helper
+      description: Select an input_datetime entity that holds the wake-up time.
+      selector:
+        entity:
+          domain: input_datetime
 
     fade_duration:
       name: Fade Duration (minutes)

@@ -76,26 +76,17 @@ input:
 
 mode: restart
 
-# ---- FIXED TRIGGER ----
 trigger:
-  - platform: template
-    value_template: >
-      {% set current = states('sensor.time') %}
-      {% set target = (inputs.start_time | default('07:00'))[:5] %}
-      {{ current == target }}
+  - platform: time_pattern
+    minutes: "/1"  # triggers every minute
 
 condition:
   - condition: template
     value_template: >
-      {% set active_days = inputs.active_days | default('both') %}
-      {% set weekday_sensor = states(inputs.weekday_sensor) %}
-      {% set is_weekday = weekday_sensor == 'on' %}
-      {{
-        active_days == 'both' or
-        (active_days == 'weekdays' and is_weekday) or
-        (active_days == 'weekends' and not is_weekday)
-      }}
-
+      {% set current = now().strftime('%H:%M') %}
+      {% set target = (inputs.start_time | default('07:00'))[:5] %}
+      {{ current == target }}
+      
 action:
   - variables:
       light: !input light_entity

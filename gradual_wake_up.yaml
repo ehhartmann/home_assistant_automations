@@ -8,24 +8,28 @@ blueprint:
 input:
   light_entity:
     name: Target Light
+    description: The light entity to fade on.
     selector:
       entity:
         domain: light
 
   start_time:
-    name: Wake-Up Start Time
+    name: Wake-up Start Time
+    description: When to start the fade sequence.
     selector:
       time: {}
 
   fade_duration:
     name: Fade Duration (minutes)
+    description: How long the fade should last.
     default: 20
     selector:
       number:
         min: 1
         max: 60
-        step: 1
         unit_of_measurement: minutes
+        step: 1
+        mode: slider
           
   light_off_duration:
     name: Light Off Duration (minutes)
@@ -77,16 +81,24 @@ input:
 mode: restart
 
 trigger:
-  - platform: time_pattern
-    minutes: "/1"  # triggers every minute
+  - platform: template
+    value_template: >
+      {% set t = states('sensor.time') %}
+      {% set target = (inputs.start_time | default('07:00'))[0:5] %}
+      {{ t == target }}
 
 condition:
   - condition: template
     value_template: >
-      {% set current = now().strftime('%H:%M') %}
-      {% set target = (inputs.start_time | default('07:00'))[:5] %}
-      {{ current == target }}
-      
+      {% set active_days = (inputs.active_days | default('both')) %}
+      {% set weekday_sensor = states(inputs.weekday_sensor) %}
+      {% set is_weekday = weekday_sensor == 'on' %}
+      {{ 
+        active_days == 'both' or
+        (active_days == 'weekdays' and is_weekday) or
+        (active_days == 'weekends' and not is_weekday)
+      }}
+
 action:
   - variables:
       light: !input light_entity

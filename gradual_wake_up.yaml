@@ -80,13 +80,13 @@ input:
 
 mode: restart
 
+# ---- FIXED TRIGGER ----
 trigger:
   - platform: template
     value_template: >
-      {% set t = states('sensor.time') %}
-      {% set start = inputs.start_time | as_datetime %}
-      {% set target = "%02d:%02d" | format(start.hour, start.minute) %}
-      {{ t == target }}
+      {% set current = states('sensor.time') %}
+      {% set target = (inputs.start_time | default('07:00'))[:5] %}
+      {{ current == target }}
 
 condition:
   - condition: template
